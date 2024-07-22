@@ -1,0 +1,42 @@
+{
+  "expo": {
+    "name": "Driving-Controller-App",
+    "slug": "Driving-Controller-App",
+    "version": "1.0.0",
+    "orientation": "landscape",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+    "platforms": ["ios", "android"],
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "supportsTablet": true,
+      "permissions": [
+        "android.permission.ACTIVITY_RECOGNITION",
+        "android.permission.HIGH_SAMPLING_RATE_SENSORS"
+      ],
+      "hardware": ["android.hardware.sensor.accelerometer"],
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#ffffff"
+      }
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      [
+        "expo-sensors",
+        {
+          "motionPermission": "Allow Drive-Controller to access your device motion."
+        }
+      ]
+    ]
+  }
+}

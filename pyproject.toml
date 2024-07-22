@@ -1,0 +1,16 @@
+[tool.poetry]
+name = "driving-training"
+version = "0.1.0"
+description = "A home made driving simulador with controller to learn how to drive"
+authors = ["Joseph Hynimoto Aguilar Lopez <haguilar@auronix.com>"]
+license = "GNU"
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.10"
+metadrive-simulator = "^0.4.2.3"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
