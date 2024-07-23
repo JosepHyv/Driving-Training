@@ -45,7 +45,7 @@ if __name__ == "__main__":
         for i in range(1, 100000):
             o, r, tm, tc, info = env.step([1.0, 0.0])
             env.render(
-                mode="top_down" if args.top_down else None,
+        mode="top_down" if args.top_down else None,
                 text=None if args.top_down else RENDER_MESSAGE,
                 **extra_args,
             )
