@@ -1,8 +1,8 @@
-import {Link} from 'expo-router';
+import {Link, useGlobalSearchParams, useLocalSearchParams} from 'expo-router';
 import { useState, useEffect } from "react";
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { CameraView, CameraType, useCameraPermissions } from 'expo-camera';
-import { StyleSheet, View, Button, Text, FlatList, TextInput, Pressable } from "react-native";
+import { StyleSheet, View, Button, Text, FlatList, TextInput, Pressable, Alert} from "react-native";
 
 const evaluateConnection = (ip: string, port: number) => { 
 
@@ -12,8 +12,21 @@ export default function ServerConnection() {
     const [title, setTitle] = useState<string>('Scan Servers'); 
     const [ipDirection, setIpDirection] = useState<string>('');
     const [portDirection, setPortDirection] = useState<string>('');
-    const [hasPermission, setHasPermission] = useState(null);
+    const {data} = useGlobalSearchParams();
 
+    useEffect(() => {
+        if(data ){
+            const casted = String(data);
+            const splited = casted.split(':');
+            console.log(splited);
+            if(splited.length  <= 1) {
+                Alert.alert("Invalid QR", "QR does not contain valid ip address" )
+            } else {
+                setIpDirection(String(splited.at(0)));
+                setPortDirection(String(splited.at(1)));
+            }
+        }
+    }, [])
 
     return (
         <View style={styles.mainView}>
@@ -38,7 +51,8 @@ export default function ServerConnection() {
                     keyboardType="number-pad" 
                     style={{padding:10, borderWidth:1, borderRadius:10, fontSize:40, fontWeight:'600', width:150}}                  
                     />
-                <Pressable onPress={() => { 
+                <Link href="/Screens/SteeringWheel"  onPress={() => { 
+                    console.log(`data: ${data}`);
                     if(ipDirection.length && portDirection.length){
                         const ws = new WebSocket(`ws://${ipDirection}:${portDirection}`);
                         console.log(`${ipDirection}:${portDirection}`);
@@ -48,13 +62,14 @@ export default function ServerConnection() {
                     }
                 }}>
                     <Ionicons name='play-circle' size={50}/>
-                </Pressable>
+                </Link>
             </View>
-
-            <View style={{borderWidth:1, alignItems:'center'}}>
-                <Ionicons name='scan' size={50}/>
-                <Text style={styles.title}> Scan address</Text>
-            </View>
+            <Link href="/Screens/Scanner" >
+                <View style={{borderWidth:1, alignItems:'center'}}>
+                    <Ionicons name='scan' size={50}/>
+                    <Text style={styles.title}> Scan address</Text>
+                </View>
+            </Link>
 
         </View>
     );

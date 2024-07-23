@@ -5,7 +5,6 @@ import { useState, useEffect } from 'react';
 import { Accelerometer } from 'expo-sensors';
 import ServerConnection from './Screens/ServerConnection';
 import { CameraView, CameraType, useCameraPermissions } from 'expo-camera';
-
 const Unsupported = () => { 
 
     return (
