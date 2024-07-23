@@ -1,9 +1,9 @@
 import { StatusBar } from 'expo-status-bar';
 import { Accelerometer } from 'expo-sensors';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { StyleSheet, Text, View, Platform, Pressable, TouchableHighlight } from 'react-native';
-import {Link, useGlobalSearchParams, useLocalSearchParams, useRouter} from 'expo-router';
+import { StyleSheet, Text, View, Platform, Pressable, TouchableHighlight, Alert } from 'react-native';
+import {Link, router, useGlobalSearchParams, useLocalSearchParams, useRouter} from 'expo-router';
 
 
 const upperLimit: number = 0.190; 
@@ -18,76 +18,17 @@ type OrientationProp = {
   right: InclinationProps
 }
 
-const DetermineColorInclination = (inclination: number): InclinationProps => {
-  const result: InclinationProps = { 
-    color: 'black'
-  }
-  const rounded = Number(inclination.toFixed(3));
-  if(rounded >= lowerLimit && rounded <= upperLimit){
-    result.color = 'green';
-  }
-  return result;
-  
-}
-
-const DetermineInclination = (inclination: number): string => { 
-  const rounded = Number(inclination.toFixed(3));
-  let response: string = 'Neutral';
-  if(rounded < lowerLimit){
-    response = 'Left'
-  }
-
-  if(rounded > upperLimit){
-    response = 'Right';
-  }
-
-  return response;
-
-}
-
-const DetermineColorDirection = (inclination: number): OrientationProp => { 
-  const rounded = Number(inclination.toFixed(3));
-  const response: OrientationProp = { 
-    left: {
-      color: 'black'
-    }, 
-    right: {
-      color: 'black'
-    }
-  }
-
-  if(rounded < lowerLimit){
-    response.left.color = 'green'
-  }
-
-  if(rounded > upperLimit){
-    response.right.color = 'green'
-  }
-
-  return response;
-
-}
-
-const ColorGear = (status: number): InclinationProps => { 
-  const style: InclinationProps = { 
-    color:'black'
-  };
-
-  if(status % 2 === 1){
-    style.color = 'red';
-  }
-  return style;
-}
-
 
 export default function SteeringWheel() {
   const movements: Array<string> = ['Forward', 'Backward'];
   const [value, setValue] = useState<number>(0);
   const [gear, setGear] = useState<number>(0);
+  const [inclination, setInclination] = useState<string>("");
   const [gearState, setGearState] = useState<string>(String(movements.at(0)));
   const {ipDirection, portDirection} = useGlobalSearchParams();
 
-  const socket = new WebSocket('');
+  const socket = useRef<WebSocket | null>(null);
+ 
   
   const EngineGear = () => {
     const position = (gear + 1) % 2; 
@@ -108,16 +49,114 @@ export default function SteeringWheel() {
       subscription.remove();
     };
   }
+
   useEffect(() => {
     if(!value){
       EnableAcelerometer();
     }
-
+    if(ipDirection && portDirection) { 
+      socket.current = new WebSocket(`ws://${ipDirection}:${portDirection}`);
+      // SendMessage('READY');
+      return () => { 
+        if(socket.current){
+          socket.current?.close();
+        }
+      }
+    }
   }, []);
+
+ 
+
+
+  const SendMessage = (order: string) => { 
+    if(socket.current && socket.current?.readyState === WebSocket.OPEN){
+      socket.current.send(order);
+    } else { 
+      // Alert.alert('Server disconected', 'wou will be redirect to connection');
+      // router.back();
+      console.log('Disconectd');
+    }
+  }
+  const DetermineColorInclination = (inclination: number): InclinationProps => {
+    const result: InclinationProps = { 
+      color: 'black'
+    }
+    const rounded = Number(inclination.toFixed(3));
+    if(rounded >= lowerLimit && rounded <= upperLimit){
+      result.color = 'green';
+    }
+    return result;
+    
+  }
+  
+  const DetermineInclination = (inclinationValue: number): string => { 
+    const rounded = Number(inclinationValue.toFixed(3));
+    let response: string = 'Neutral';
+    if(rounded < lowerLimit){
+      response = 'Left';
+    }
+  
+    if(rounded > upperLimit){
+      response = 'Right';
+    }
+
+    if(inclination !== response){
+      setInclination(response);
+      SendMessage(response)
+    }
+    return response;
+  }
+
+  const SendPedalMessage = (order: string) => { 
+    let pedal = order;
+    if(gear % 2 == 1){
+      pedal = 'R' + order;
+    }
+    SendMessage(pedal);
+  }
+  
+  const DetermineColorDirection = (inclination: number): OrientationProp => { 
+    const rounded = Number(inclination.toFixed(3));
+    const response: OrientationProp = { 
+      left: {
+        color: 'black'
+      }, 
+      right: {
+        color: 'black'
+      }
+    }
+  
+    if(rounded < lowerLimit){
+      response.left.color = 'green'
+    }
+  
+    if(rounded > upperLimit){
+      response.right.color = 'green'
+    }
+  
+    return response;
+  
+  }
+  
+  const ColorGear = (status: number): InclinationProps => { 
+    const style: InclinationProps = { 
+      color:'black'
+    };
+  
+    if(status % 2 === 1){
+      style.color = 'red';
+    }
+    return style;
+  }
 
   return (
     <View style={[styles.container]}>
-      
+      <Pressable onPress={() => {
+        router.back();
+        socket.current?.close();
+      }}>
+        <Ionicons size={50} color={"red"} style={[styles.directionIcon, {color:"red"}]} name='close'/>
+      </Pressable>
       <StatusBar style="auto" />
       
       <View style={{flex: 0.5, alignItems:'center',justifyContent:'center'}}>
@@ -143,12 +182,15 @@ export default function SteeringWheel() {
         style={styles.pedals}
         underlayColor="red"
         activeOpacity={0.6} 
-        onPress={() => { 
+        onPressIn={() => { 
           console.log(`Break from ${Platform.OS}`);
-          socket.onopen = () => {
-            socket.send('break');
-          }
-        }}>
+          SendMessage('Brake');
+        }}
+        onPressOut={() => { 
+          console.log('Cancel Break');
+          SendMessage('Brake-Cancel');
+        }}
+        >
           <Text style={[styles.inclination]}>Brake Pedal</Text>
         </TouchableHighlight>
 
@@ -156,8 +198,13 @@ export default function SteeringWheel() {
         style={styles.pedals}
         underlayColor="green"
         activeOpacity={0.6} 
-        onPress={() => {
+        onPressIn={() => {
           console.log(`Accelerator from ${Platform.OS}`);
+          SendPedalMessage('Accelerator');
+        }}
+        onPressOut={() => {
+          console.log('Cancel Accelerator');
+          SendPedalMessage('Accelerator-Cancel');
         }}
         >
           <Text style={[styles.inclination]}>Accelerator Pedal</Text>
