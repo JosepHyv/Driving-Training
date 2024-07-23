@@ -1,18 +1,17 @@
-import {Link, useGlobalSearchParams, useLocalSearchParams} from 'expo-router';
+import {Link, useGlobalSearchParams, useLocalSearchParams, useRouter} from 'expo-router';
 import { useState, useEffect } from "react";
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { CameraView, CameraType, useCameraPermissions } from 'expo-camera';
 import { StyleSheet, View, Button, Text, FlatList, TextInput, Pressable, Alert} from "react-native";
 
-const evaluateConnection = (ip: string, port: number) => { 
 
-}
 
 export default function ServerConnection() { 
     const [title, setTitle] = useState<string>('Scan Servers'); 
     const [ipDirection, setIpDirection] = useState<string>('');
     const [portDirection, setPortDirection] = useState<string>('');
     const {data} = useGlobalSearchParams();
+    const router = useRouter();
 
     useEffect(() => {
         if(data ){
@@ -51,18 +50,13 @@ export default function ServerConnection() {
                     keyboardType="number-pad" 
                     style={{padding:10, borderWidth:1, borderRadius:10, fontSize:40, fontWeight:'600', width:150}}                  
                     />
-                <Link href="/Screens/SteeringWheel"  onPress={() => { 
-                    console.log(`data: ${data}`);
+                <Pressable onPress={() => { 
                     if(ipDirection.length && portDirection.length){
-                        const ws = new WebSocket(`ws://${ipDirection}:${portDirection}`);
-                        console.log(`${ipDirection}:${portDirection}`);
-                        ws.onopen = () => { 
-                            ws.send('Prueba');
-                        }
+                        router.push({pathname: '/Screens/SteeringWheel', params:{ipDirection, portDirection}})
                     }
                 }}>
                     <Ionicons name='play-circle' size={50}/>
-                </Link>
+                </Pressable>
             </View>
             <Link href="/Screens/Scanner" >
                 <View style={{borderWidth:1, alignItems:'center'}}>

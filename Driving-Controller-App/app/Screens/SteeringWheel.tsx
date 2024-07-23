@@ -3,6 +3,8 @@ import { Accelerometer } from 'expo-sensors';
 import { useState, useEffect } from 'react';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { StyleSheet, Text, View, Platform, Pressable, TouchableHighlight } from 'react-native';
+import {Link, useGlobalSearchParams, useLocalSearchParams, useRouter} from 'expo-router';
+
 
 const upperLimit: number = 0.190; 
 const lowerLimit: number = -upperLimit;
@@ -78,13 +80,14 @@ const ColorGear = (status: number): InclinationProps => {
 }
 
 
-
-
 export default function SteeringWheel() {
   const movements: Array<string> = ['Forward', 'Backward'];
   const [value, setValue] = useState<number>(0);
   const [gear, setGear] = useState<number>(0);
   const [gearState, setGearState] = useState<string>(String(movements.at(0)));
+  const {ipDirection, portDirection} = useGlobalSearchParams();
+
+  const socket = new WebSocket('');
   
   const EngineGear = () => {
     const position = (gear + 1) % 2; 
@@ -92,7 +95,7 @@ export default function SteeringWheel() {
     setGear(position);
     setGearState(String(direction));
   }
-  useEffect(() => {
+  const EnableAcelerometer = () => {
     const subscription = Accelerometer.addListener(DeviceAcelerometerData => {
       let value = DeviceAcelerometerData.y; 
       if(Platform.OS === 'ios'){
@@ -104,6 +107,12 @@ export default function SteeringWheel() {
     return () => {
       subscription.remove();
     };
+  }
+  useEffect(() => {
+    if(!value){
+      EnableAcelerometer();
+    }
+
   }, []);
 
   return (
@@ -136,6 +145,9 @@ export default function SteeringWheel() {
         activeOpacity={0.6} 
         onPress={() => { 
           console.log(`Break from ${Platform.OS}`);
+          socket.onopen = () => {
+            socket.send('break');
+          }
         }}>
           <Text style={[styles.inclination]}>Brake Pedal</Text>
         </TouchableHighlight>
